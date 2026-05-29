@@ -797,23 +797,15 @@ textarea { font-family: inherit; }
 ================================================ */
 @media (min-width: 520px) {
   body { background: #CBD5E1; }
-  .header { max-width: 480px; left: 50%; transform: translateX(-50%); right: auto; }
-  #map    { max-width: 480px; left: 50%; transform: translateX(-50%); right: auto; }
+  .header { width: 480px; left: 50%; transform: translateX(-50%); right: auto; }
+  #map    { width: 480px; left: 50%; transform: translateX(-50%); right: auto; }
   /* bottom-sheet: transform 쓰지 않고 left로만 중앙 정렬 (transform 충돌 방지) */
   .bottom-sheet {
     max-width: 480px;
     left: calc(50% - 240px);
     right: auto;
   }
-  /* modal-overlay: 가운데 정렬 컨테이너로 사용 */
-  .modal-overlay {
-    justify-content: center;
-    align-items: flex-end;
-  }
-  .modal-sheet {
-    max-width: 480px;
-    width: 100%;
-  }
+  .modal-sheet { max-width: 480px; left: 50%; right: auto; }
   .my-location-btn { right: calc(50% - 224px); }
   .toast { left: 50%; }
 }
