@@ -805,7 +805,8 @@ textarea { font-family: inherit; }
     left: calc(50% - 240px);
     right: auto;
   }
-  .modal-sheet { max-width: 480px; left: 50%; right: auto; }
+  .modal-overlay { justify-content: center; }
+  .modal-sheet { width: 480px; }
   .my-location-btn { right: calc(50% - 224px); }
   .toast { left: 50%; }
 }
