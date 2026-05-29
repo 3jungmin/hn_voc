@@ -805,7 +805,15 @@ textarea { font-family: inherit; }
     left: calc(50% - 240px);
     right: auto;
   }
-  .modal-sheet { max-width: 480px; left: 50%; right: auto; }
+  /* modal-overlay: 가운데 정렬 컨테이너로 사용 */
+  .modal-overlay {
+    justify-content: center;
+    align-items: flex-end;
+  }
+  .modal-sheet {
+    max-width: 480px;
+    width: 100%;
+  }
   .my-location-btn { right: calc(50% - 224px); }
   .toast { left: 50%; }
 }
