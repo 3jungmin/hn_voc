@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <title>단지 민원지도</title>
+  <link rel="stylesheet" href="style.css">
+  <!-- KakaoMap API: https://developers.kakao.com 에서 발급한 JavaScript 앱 키로 교체하세요 -->
+  <script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=f95c8225ff3a5a723696881539da2c85&libraries=services,clusterer"></script>
+</head>
+<body>
+
+  <!-- Header -->
+  <header class="header">
+    <div class="header-inner">
+      <div class="header-left">
+        <img src="raemian-symbol.png" alt="래미안" class="raemian-logo">
+        <div class="header-titles">
+          <span class="apt-name">원베일리</span>
+          <span class="apt-sub">101동 101호</span>
+        </div>
+      </div>
+      <div class="header-right">
+        <button class="icon-btn" id="filterBtn" aria-label="필터">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+          <span class="filter-badge" id="filterBadge"></span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Map -->
+  <div id="map"></div>
+
+  <!-- My Location Button -->
+  <button class="my-location-btn" id="myLocationBtn" aria-label="내 위치">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="9" stroke-dasharray="4 2" opacity="0.3"/></svg>
+  </button>
+
+  <!-- 지도 탭 힌트 -->
+  <div class="tap-hint" id="tapHint">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+    지도를 탭하면 바로 등록
+  </div>
+
+  <!-- Bottom Sheet: Pin List -->
+  <div class="bottom-sheet" id="bottomSheet">
+    <div class="sheet-drag-area" id="sheetDragArea">
+      <div class="sheet-handle"></div>
+    </div>
+    <div class="sheet-header">
+      <div class="sheet-header-left">
+        <button class="sheet-back-btn" id="sheetBackBtn" hidden aria-label="뒤로">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <h2 class="sheet-title" id="sheetTitle">단지 민원 현황</h2>
+      </div>
+      <span class="pin-count-badge" id="pinCount">0건</span>
+    </div>
+    <div class="sheet-list-wrap">
+      <div class="pin-list" id="pinList"></div>
+    </div>
+  </div>
+
+  <!-- ======================== -->
+  <!-- MODAL: 민원 등록 -->
+  <!-- ======================== -->
+  <div class="modal-overlay" id="registerModal" hidden>
+    <div class="modal-backdrop" id="registerBackdrop"></div>
+    <div class="modal-sheet" id="registerSheet">
+      <div class="modal-handle"></div>
+      <div class="modal-header">
+        <h2 class="modal-title">민원 등록</h2>
+        <button class="modal-close" id="registerClose" aria-label="닫기">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="location-row" id="locationRow">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" flex-shrink="0"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          <input type="text" id="locationText" placeholder="예: 101동 앞, 놀이터 옆, 경비실 앞 등" autocomplete="off" maxlength="50">
+        </div>
+
+        <div class="form-section">
+          <label class="form-label">유형 선택 <span class="req">*</span></label>
+          <div class="chip-scroll-wrap">
+            <div class="chip-row" id="typeChips"></div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <label class="form-label">중요도 <span class="req">*</span></label>
+          <div class="chip-row severity-row" id="severityChips"></div>
+        </div>
+
+        <div class="form-section">
+          <label class="form-label">상세 설명 <span class="opt">(선택)</span></label>
+          <textarea class="form-textarea" id="descInput" placeholder="문제 상황을 자세히 설명해주세요" rows="3"></textarea>
+        </div>
+
+        <div class="form-section">
+          <label class="form-label">사진 첨부 <span class="opt">(선택)</span></label>
+          <div class="photo-upload" id="photoUpload">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+            <span>사진 추가</span>
+          </div>
+          <input type="file" accept="image/*" id="photoInput" hidden>
+          <div class="photo-preview-wrap" id="photoPreviewWrap" hidden>
+            <img id="photoPreviewImg" src="" alt="첨부 사진">
+            <button class="photo-del" id="photoDel" aria-label="사진 삭제">×</button>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-primary" id="submitBtn" disabled>등록하기</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================== -->
+  <!-- MODAL: 민원 상세 -->
+  <!-- ======================== -->
+  <div class="modal-overlay" id="detailModal" hidden>
+    <div class="modal-backdrop" id="detailBackdrop"></div>
+    <div class="modal-sheet" id="detailSheet">
+      <div class="modal-handle"></div>
+      <div class="modal-header">
+        <h2 class="modal-title" id="detailTitle">민원 상세</h2>
+        <button class="modal-close" id="detailClose" aria-label="닫기">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="modal-body" id="detailBody"></div>
+      <div class="modal-footer">
+        <button class="btn-secondary" id="detailShare">공유하기</button>
+        <button class="btn-primary" id="detailGo">지도에서 보기</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================== -->
+  <!-- MODAL: 필터 -->
+  <!-- ======================== -->
+  <div class="modal-overlay" id="filterModal" hidden>
+    <div class="modal-backdrop" id="filterBackdrop"></div>
+    <div class="modal-sheet" id="filterSheet">
+      <div class="modal-handle"></div>
+      <div class="modal-header">
+        <h2 class="modal-title">필터</h2>
+        <button class="modal-close" id="filterClose" aria-label="닫기">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="form-section">
+          <label class="form-label">유형</label>
+          <div class="chip-row flex-wrap" id="filterTypeChips"></div>
+        </div>
+        <div class="form-section">
+          <label class="form-label">중요도</label>
+          <div class="chip-row flex-wrap" id="filterSeverityChips"></div>
+        </div>
+        <div class="form-section">
+          <label class="form-label">처리 상태</label>
+          <div class="chip-row flex-wrap" id="filterStatusChips"></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" id="filterReset">초기화</button>
+        <button class="btn-primary" id="filterApply">적용하기</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast" aria-live="polite"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
