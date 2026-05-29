@@ -724,10 +724,22 @@ function bindEvents() {
   }, { passive: true });
 
   el.sheetDragArea.addEventListener('touchend', e => {
-    lastTouchEnd = Date.now();
+    const now = Date.now();
     const dy = e.changedTouches[0].clientY - dragStartY;
-    // 스와이프 다운만 허용 (collapse)
-    if (dy > 40) collapseSheet();
+
+    if (Math.abs(dy) < 10 && now - lastTouchEnd < 300) {
+      // 더블탭 방지 — 무시
+    } else if (Math.abs(dy) < 10) {
+      // 탭: 토글
+      toggleSheet();
+    } else if (dy > 40) {
+      // 스와이프 다운: collapse
+      collapseSheet();
+    } else if (dy < -40) {
+      // 스와이프 업: expand
+      expandSheet();
+    }
+    lastTouchEnd = now;
   }, { passive: true });
 
   // ── Register Modal ──────────────────────────────────────────
